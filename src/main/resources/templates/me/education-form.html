@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${isEdit} ? 'Sửa học vấn' : 'Thêm học vấn'">Học vấn</title>
+</head>
+<body>
+<main>
+  <h1 th:text="${isEdit} ? 'Sửa thông tin học vấn' : 'Thêm thông tin học vấn'">Học vấn</h1>
+  <p>Tài khoản: <strong th:text="${userEmail}"></strong></p>
+
+  <form th:action="@{${formAction}}" th:object="${educationForm}" method="post">
+    <div>
+      <label for="schoolName">Trường *</label>
+      <input id="schoolName" type="text" th:field="*{schoolName}" maxlength="150" required>
+      <div th:if="${#fields.hasErrors('schoolName')}" th:errors="*{schoolName}"></div>
+    </div>
+
+    <div>
+      <label for="major">Chuyên ngành *</label>
+      <input id="major" type="text" th:field="*{major}" maxlength="150" required>
+      <div th:if="${#fields.hasErrors('major')}" th:errors="*{major}"></div>
+    </div>
+
+    <div>
+      <label for="startDate">Từ ngày *</label>
+      <input id="startDate" type="date" th:field="*{startDate}" required>
+      <div th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+    </div>
+
+    <div>
+      <label for="endDate">Đến ngày (để trống nếu đang học)</label>
+      <input id="endDate" type="date" th:field="*{endDate}">
+      <div th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+    </div>
+
+    <div>
+      <label for="gpa">GPA (tuỳ chọn, 0 – 4)</label>
+      <input id="gpa" type="number" step="0.01" min="0" max="4" th:field="*{gpa}">
+      <div th:if="${#fields.hasErrors('gpa')}" th:errors="*{gpa}"></div>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <button type="submit" th:text="${isEdit} ? 'Lưu thay đổi' : 'Thêm mới'">Lưu</button>
+      <a th:href="@{/me/profile}">Quay lại hồ sơ</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
