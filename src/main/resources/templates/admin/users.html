@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản trị tài khoản - TalentLink</title>
+</head>
+<body>
+<h1>Quản trị tài khoản</h1>
+
+<div th:if="${successMessage}" style="color: #15803d; margin-bottom: 12px;">
+    <p th:text="${successMessage}"></p>
+</div>
+<div th:if="${errorMessage}" style="color: #b91c1c; margin-bottom: 12px;">
+    <p th:text="${errorMessage}"></p>
+</div>
+
+<!-- Form tạo tài khoản đối tác -->
+<section style="margin-bottom: 24px; padding: 12px; border: 1px solid #ddd;">
+    <h2>Tạo tài khoản đối tác</h2>
+    <form th:action="@{/admin/users/partners}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <div>
+            <label for="partnerFullName">Họ tên:</label>
+            <input id="partnerFullName" type="text" name="fullName" required/>
+        </div>
+        <div>
+            <label for="partnerEmail">Email:</label>
+            <input id="partnerEmail" type="email" name="email" required/>
+        </div>
+        <div>
+            <label for="partnerPassword">Mật khẩu:</label>
+            <input id="partnerPassword" type="password" name="password" required/>
+        </div>
+        <div>
+            <label for="partnerPhone">Số điện thoại:</label>
+            <input id="partnerPhone" type="text" name="phone"/>
+        </div>
+        <div>
+            <label for="partnerCompanyName">Tên công ty:</label>
+            <input id="partnerCompanyName" type="text" name="companyName" required/>
+        </div>
+        <button type="submit">Tạo đối tác</button>
+    </form>
+</section>
+
+<!-- Tìm kiếm & lọc -->
+<section style="margin-bottom: 16px;">
+    <form th:action="@{/admin/users}" method="get">
+        <label for="searchKeyword">Tìm kiếm:</label>
+        <input id="searchKeyword" type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên hoặc email"/>
+
+        <label for="filterRoleId">Vai trò:</label>
+        <select id="filterRoleId" name="roleId">
+            <option value="" th:selected="${roleId == null}">Tất cả vai trò</option>
+            <option value="1" th:selected="${roleId == 1}">ADMIN</option>
+            <option value="2" th:selected="${roleId == 2}">STUDENT</option>
+            <option value="3" th:selected="${roleId == 3}">PARTNER</option>
+        </select>
+
+        <label for="filterStatus">Trạng thái:</label>
+        <select id="filterStatus" name="status">
+            <option value="" th:selected="${status == ''}">Tất cả trạng thái</option>
+            <option value="active" th:selected="${status == 'active'}">Đang hoạt động</option>
+            <option value="locked" th:selected="${status == 'locked'}">Bị khoá</option>
+        </select>
+
+        <button type="submit">Lọc</button>
+        <a th:href="@{/admin/users}">Đặt lại</a>
+    </form>
+</section>
+
+<!-- Bảng danh sách tài khoản -->
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Họ tên</th>
+        <th>Email</th>
+        <th>Vai trò</th>
+        <th>Trạng thái</th>
+        <th>Thao tác</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="u : ${usersPage.content}">
+        <td th:text="${u.id}"></td>
+        <td th:text="${u.fullName}"></td>
+        <td th:text="${u.email}"></td>
+        <td th:text="${roleMappingHelper.toRoleName(u.roleId)}"></td>
+        <td>
+            <span th:if="${u.isActive}">Đang hoạt động</span>
+            <span th:unless="${u.isActive}">Bị khoá</span>
+        </td>
+        <td>
+            <span th:if="${#strings.equalsIgnoreCase(u.email, currentAdminEmail)}">Tài khoản hiện tại</span>
+            <form th:unless="${#strings.equalsIgnoreCase(u.email, currentAdminEmail)}"
+                  th:action="@{/admin/users/{id}/toggle-status(id=${u.id})}"
+                  method="post"
+                  th:attr="data-confirm=${u.isActive} ? 'Bạn có chắc chắn muốn khoá tài khoản này?' : 'Bạn có chắc chắn muốn mở khoá tài khoản này?'"
+                  onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="keyword" th:value="${keyword}"/>
+                <input type="hidden" name="roleId" th:value="${roleId}"/>
+                <input type="hidden" name="status" th:value="${status}"/>
+                <input type="hidden" name="page" th:value="${usersPage.number}"/>
+                <input type="hidden" name="size" th:value="${size}"/>
+                <button type="submit" th:text="${u.isActive} ? 'Khoá' : 'Mở khoá'"></button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(usersPage.content)}">
+        <td colspan="6">Không có tài khoản nào phù hợp.</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- Phân trang -->
+<div th:if="${usersPage.totalPages > 1}" style="margin-top: 12px;">
+    <a th:if="${usersPage.hasPrevious()}"
+       th:href="@{/admin/users(keyword=${keyword}, roleId=${roleId}, status=${status}, page=${usersPage.number - 1}, size=${size})}">
+        Trước
+    </a>
+    <span th:each="i : ${#numbers.sequence(0, usersPage.totalPages - 1)}">
+        <a th:if="${i != usersPage.number}"
+           th:href="@{/admin/users(keyword=${keyword}, roleId=${roleId}, status=${status}, page=${i}, size=${size})}"
+           th:text="${i + 1}"></a>
+        <strong th:if="${i == usersPage.number}" th:text="${i + 1}"></strong>
+    </span>
+    <a th:if="${usersPage.hasNext()}"
+       th:href="@{/admin/users(keyword=${keyword}, roleId=${roleId}, status=${status}, page=${usersPage.number + 1}, size=${size})}">
+        Sau
+    </a>
+</div>
+</body>
+</html>
