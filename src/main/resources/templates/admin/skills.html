@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản trị danh mục kỹ năng</title>
+</head>
+<body>
+<h1>Quản trị danh mục kỹ năng</h1>
+
+<p th:if="${successMessage}" th:text="${successMessage}"></p>
+<p th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+<h2>Thêm kỹ năng mới</h2>
+<form th:action="@{/admin/skills/create}" method="post">
+    <label for="name">Tên kỹ năng:</label>
+    <input id="name" name="name" type="text" maxlength="100" required>
+
+    <label for="category">Danh mục:</label>
+    <input id="category" name="category" type="text" maxlength="50">
+
+    <button type="submit">Thêm mới</button>
+</form>
+
+<h2>Danh sách kỹ năng</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên kỹ năng</th>
+        <th>Danh mục</th>
+        <th>Trạng thái</th>
+        <th>Thao tác</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="skill : ${skills}">
+        <td th:text="${skill.id}">1</td>
+        <td>
+            <form th:id="${'update-form-' + skill.id}"
+                  th:action="@{/admin/skills/{id}/update(id=${skill.id})}"
+                  method="post">
+                <input name="name" type="text" maxlength="100"
+                       th:value="${skill.name}" required>
+            </form>
+        </td>
+        <td>
+            <input name="category" type="text" maxlength="50"
+                   th:value="${skill.category}">
+            </form>
+        </td>
+        <td th:text="${skill.isActive} ? 'Đang hoạt động' : 'Đang ẩn'">Đang hoạt động</td>
+        <td>
+            <button type="submit" th:form="${'update-form-' + skill.id}">Lưu</button>
+
+            <form th:action="@{/admin/skills/{id}/toggle-active(id=${skill.id})}"
+                  method="post" style="display:inline;">
+                <button type="submit"
+                        th:text="${skill.isActive} ? 'Ẩn' : 'Hiện'">Ẩn</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
