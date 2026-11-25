@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kỹ năng của tôi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .level-guide-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            border-radius: 6px;
+            padding: 12px 14px;
+        }
+        .category-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+        .skill-row {
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .skill-row:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h2 class="mb-1">Kỹ năng của tôi</h2>
+            <p class="text-muted mb-0">Chọn kỹ năng từ danh mục, tự đánh giá mức 1–5 và xem theo từng nhóm trên hồ sơ.</p>
+        </div>
+        <a th:href="@{/me/profile}" class="btn btn-outline-secondary">Về trang hồ sơ</a>
+    </div>
+
+    <!-- Thông báo thành công / lỗi -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột trái: Form thêm kỹ năng (tìm nhanh + chọn mức 1-5 + mô tả mức) -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Thêm kỹ năng mới</h5>
+
+                    <form th:action="@{/student/skills/add}" method="post" id="addSkillForm">
+                        <!-- Ô tìm nhanh kỹ năng -->
+                        <div class="mb-3">
+                            <label for="skillSearchInput" class="form-label fw-semibold">Tìm nhanh kỹ năng</label>
+                            <input type="text"
+                                   id="skillSearchInput"
+                                   class="form-control"
+                                   placeholder="Gõ tên kỹ năng hoặc nhóm (VD: Java, Spring, SQL...)"
+                                   autocomplete="off">
+                            <div class="form-text" id="skillMatchCount"></div>
+                        </div>
+
+                        <!-- Danh sách kỹ năng đang hoạt động -->
+                        <div class="mb-3">
+                            <label for="skillSelect" class="form-label fw-semibold">Chọn kỹ năng</label>
+                            <select id="skillSelect" name="skillId" class="form-select" size="5" required>
+                                <option th:each="sk : ${activeSkills}"
+                                        th:value="${sk.id}"
+                                        th:data-name="${sk.name}"
+                                        th:data-category="${sk.category != null ? sk.category : 'Khác'}"
+                                        th:text="${sk.name} + (${sk.category != null ? ' — ' + sk.category : ''})">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Chọn mức 1-5 -->
+                        <div class="mb-2">
+                            <label for="proficiencyLevelSelect" class="form-label fw-semibold">Mức độ thành thạo (1–5)</label>
+                            <select id="proficiencyLevelSelect" name="proficiencyLevel" class="form-select" required>
+                                <option value="1">Mức 1 — Cơ bản</option>
+                                <option value="2">Mức 2 — Sơ cấp</option>
+                                <option value="3" selected>Mức 3 — Trung cấp</option>
+                                <option value="4">Mức 4 — Khá</option>
+                                <option value="5">Mức 5 — Chuyên sâu</option>
+                            </select>
+                        </div>
+
+                        <!-- Mô tả động cho mức đang chọn -->
+                        <div class="level-guide-box mb-3">
+                            <div class="fw-semibold small text-primary mb-1">Mô tả mức đã chọn:</div>
+                            <div id="selectedLevelDesc" class="small text-dark"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Thêm vào hồ sơ</button>
+                    </form>
+
+                    <!-- Bảng tham chiếu đầy đủ 5 mức -->
+                    <hr class="my-4">
+                    <h6 class="fw-semibold mb-2">Thang đánh giá mức 1–5</h6>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li th:each="entry : ${levelDescriptions}" class="mb-1">
+                            <strong class="text-dark" th:text="'Mức ' + ${entry.key} + ':'"></strong>
+                            <span th:text="${entry.value}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Hiển thị kỹ năng theo nhóm trên hồ sơ -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Kỹ năng trên hồ sơ (Theo nhóm)</h5>
+                        <span class="badge bg-secondary" th:text="${#lists.size(studentSkills)} + ' kỹ năng'">0 kỹ năng</span>
+                    </div>
+
+                    <div th:if="${#maps.isEmpty(groupedSkills)}" class="text-center text-muted py-5">
+                        Bạn chưa thêm kỹ năng nào. Hãy chọn kỹ năng ở khung bên trái để bắt đầu.
+                    </div>
+
+                    <div th:each="group : ${groupedSkills}" class="category-card p-3 mb-3 bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-primary mb-0" th:text="${group.key}">Nhóm kỹ năng</h6>
+                            <span class="badge rounded-pill text-bg-light border"
+                                  th:text="${#lists.size(group.value)} + ' mục'"></span>
+                        </div>
+
+                        <div th:each="item : ${group.value}" class="skill-row py-2">
+                            <div class="row align-items-center g-2">
+                                <div class="col-md-5">
+                                    <div class="fw-semibold" th:text="${item.skill.name}">Tên kỹ năng</div>
+                                    <div class="small text-muted"
+                                         th:text="${levelDescriptions[item.proficiencyLevel]}">Mô tả mức</div>
+                                </div>
+
+                                <!-- Cập nhật mức 1-5 trực tiếp -->
+                                <div class="col-md-5">
+                                    <form th:action="@{/student/skills/update-level}" method="post" class="d-flex gap-1">
+                                        <input type="hidden" name="skillId" th:value="${item.skill.id}">
+                                        <select name="proficiencyLevel" class="form-select form-select-sm" aria-label="Đổi mức kỹ năng">
+                                            <option th:each="lvl : ${#numbers.sequence(1, 5)}"
+                                                    th:value="${lvl}"
+                                                    th:selected="${lvl == item.proficiencyLevel}"
+                                                    th:text="'Mức ' + ${lvl}"></option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Lưu</button>
+                                    </form>
+                                </div>
+
+                                <!-- Bỏ kỹ năng -->
+                                <div class="col-md-2 text-md-end">
+                                    <form th:action="@{/student/skills/remove}" method="post"
+                                          onsubmit="return confirm('Bỏ kỹ năng này khỏi hồ sơ?');">
+                                        <input type="hidden" name="skillId" th:value="${item.skill.id}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Bỏ</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const levelDescriptions = /*[[${levelDescriptions}]]*/ {
+        1: "Cơ bản — Nắm khái niệm nền tảng, làm được tác vụ đơn giản có hướng dẫn.",
+        2: "Sơ cấp — Tự xử lý tác vụ cơ bản, còn cần hỗ trợ với bài toán phức tạp.",
+        3: "Trung cấp — Làm việc độc lập, giải quyết tốt các tình huống phổ biến.",
+        4: "Khá — Thành thạo, xử lý tốt edge case và tối ưu giải pháp.",
+        5: "Chuyên sâu — Làm chủ kiến trúc/kỹ thuật, tối ưu cao và xử lý bài toán khó."
+    };
+
+    const searchInput = document.getElementById("skillSearchInput");
+    const skillSelect = document.getElementById("skillSelect");
+    const matchCount = document.getElementById("skillMatchCount");
+    const levelSelect = document.getElementById("proficiencyLevelSelect");
+    const selectedLevelDesc = document.getElementById("selectedLevelDesc");
+
+    function updateLevelDescription() {
+        const lvl = Number(levelSelect.value);
+        selectedLevelDesc.textContent = levelDescriptions[lvl] || "";
+    }
+
+    function filterSkills() {
+        const keyword = (searchInput.value || "").trim().toLowerCase();
+        const options = Array.from(skillSelect.options);
+        let visibleCount = 0;
+        let firstVisibleOption = null;
+
+        options.forEach(opt => {
+            const name = (opt.dataset.name || opt.textContent || "").toLowerCase();
+            const category = (opt.dataset.category || "").toLowerCase();
+            const isMatch = !keyword || name.includes(keyword) || category.includes(keyword);
+            opt.hidden = !isMatch;
+            if (isMatch) {
+                visibleCount++;
+                if (!firstVisibleOption) {
+                    firstVisibleOption = opt;
+                }
+            }
+        });
+
+        matchCount.textContent = keyword
+            ? `Tìm thấy ${visibleCount} kỹ năng phù hợp.`
+            : `Hiển thị ${visibleCount} kỹ năng đang hoạt động.`;
+
+        if (firstVisibleOption && (!skillSelect.value || skillSelect.selectedOptions[0]?.hidden)) {
+            firstVisibleOption.selected = true;
+        }
+    }
+
+    searchInput.addEventListener("input", filterSkills);
+    levelSelect.addEventListener("change", updateLevelDescription);
+
+    filterSkills();
+    updateLevelDescription();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
