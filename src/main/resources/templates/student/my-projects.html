@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dự án cá nhân</title>
+</head>
+<body>
+<h1>Dự án cá nhân</h1>
+<p>Số lượng dự án: <strong th:text="${projectCount}">0</strong> / <span th:text="${maxProjects}">20</span></p>
+
+<div th:if="${successMessage}" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+<form th:if="${editingId == null and canAddMore}"
+      th:action="@{/student/my-projects}"
+      th:object="${projectForm}"
+      method="post">
+    <h2>Thêm dự án mới</h2>
+    <div>
+        <label>Tên dự án (*)</label>
+        <input type="text" th:field="*{projectName}" required maxlength="150"/>
+        <span th:if="${#fields.hasErrors('projectName')}" th:errors="*{projectName}"></span>
+    </div>
+    <div>
+        <label>Vai trò</label>
+        <input type="text" th:field="*{roleName}" maxlength="120"/>
+    </div>
+    <div>
+        <label>Công nghệ sử dụng</label>
+        <input type="text" th:field="*{technologies}" maxlength="255"/>
+    </div>
+    <div>
+        <label>Link GitHub (*)</label>
+        <input type="url" th:field="*{githubUrl}" required maxlength="500" placeholder="https://github.com/..."/>
+        <span th:if="${#fields.hasErrors('githubUrl')}" th:errors="*{githubUrl}"></span>
+    </div>
+    <div>
+        <label>Link demo (tuỳ chọn)</label>
+        <input type="url" th:field="*{demoUrl}" maxlength="500" placeholder="https://..."/>
+        <span th:if="${#fields.hasErrors('demoUrl')}" th:errors="*{demoUrl}"></span>
+    </div>
+    <div>
+        <label>Mô tả</label>
+        <textarea th:field="*{description}" rows="4"></textarea>
+    </div>
+    <button type="submit">Lưu dự án</button>
+</form>
+
+<p th:if="${editingId == null and !canAddMore}">
+    Bạn đã đạt giới hạn tối đa <span th:text="${maxProjects}">20</span> dự án cho hồ sơ này.
+</p>
+
+<form th:if="${editingId != null}"
+      th:action="@{/student/my-projects/{id}(id=${editingId})}"
+      th:object="${projectForm}"
+      method="post">
+    <h2>Chỉnh sửa dự án</h2>
+    <div>
+        <label>Tên dự án (*)</label>
+        <input type="text" th:field="*{projectName}" required maxlength="150"/>
+        <span th:if="${#fields.hasErrors('projectName')}" th:errors="*{projectName}"></span>
+    </div>
+    <div>
+        <label>Vai trò</label>
+        <input type="text" th:field="*{roleName}" maxlength="120"/>
+    </div>
+    <div>
+        <label>Công nghệ sử dụng</label>
+        <input type="text" th:field="*{technologies}" maxlength="255"/>
+    </div>
+    <div>
+        <label>Link GitHub (*)</label>
+        <input type="url" th:field="*{githubUrl}" required maxlength="500"/>
+        <span th:if="${#fields.hasErrors('githubUrl')}" th:errors="*{githubUrl}"></span>
+    </div>
+    <div>
+        <label>Link demo (tuỳ chọn)</label>
+        <input type="url" th:field="*{demoUrl}" maxlength="500"/>
+        <span th:if="${#fields.hasErrors('demoUrl')}" th:errors="*{demoUrl}"></span>
+    </div>
+    <div>
+        <label>Mô tả</label>
+        <textarea th:field="*{description}" rows="4"></textarea>
+    </div>
+    <button type="submit">Cập nhật</button>
+    <a th:href="@{/student/my-projects}">Huỷ</a>
+</form>
+
+<hr/>
+
+<h2>Danh sách dự án</h2>
+<div th:if="${#lists.isEmpty(projects)}">Chưa có dự án cá nhân nào.</div>
+
+<div th:each="p : ${projects}">
+    <h3 th:text="${p.projectName}">Tên dự án</h3>
+    <p th:if="${p.roleName != null}">Vai trò: <span th:text="${p.roleName}"></span></p>
+    <p th:if="${p.technologies != null}">Công nghệ: <span th:text="${p.technologies}"></span></p>
+    <p th:if="${p.description != null}" th:text="${p.description}"></p>
+    <p>
+        <a th:href="${p.githubUrl}" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <span th:if="${p.demoUrl != null}">
+            | <a th:href="${p.demoUrl}" target="_blank" rel="noopener noreferrer">Demo</a>
+        </span>
+    </p>
+    <a th:href="@{/student/my-projects/{id}/edit(id=${p.id})}">Sửa</a>
+    <form th:action="@{/student/my-projects/{id}/delete(id=${p.id})}" method="post" style="display:inline;">
+        <button type="submit" onclick="return confirm('Xoá dự án này?');">Xoá</button>
+    </form>
+</div>
+</body>
+</html>
