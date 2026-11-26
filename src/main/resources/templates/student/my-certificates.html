@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chứng chỉ của tôi</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 960px; margin: 24px auto; padding: 0 16px; }
+        .alert-success { padding: 10px 14px; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; border-radius: 4px; margin-bottom: 16px; }
+        .alert-error { padding: 10px 14px; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; border-radius: 4px; margin-bottom: 16px; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-weight: 600; margin-bottom: 4px; }
+        .field input[type="text"],
+        .field input[type="date"],
+        .field input[type="file"] { width: 100%; max-width: 480px; padding: 8px; box-sizing: border-box; }
+        .error { color: #c62828; font-size: 0.875rem; margin-top: 4px; }
+        .btn { padding: 7px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; cursor: pointer; display: inline-block; }
+        .btn-primary { background: #1565c0; color: #fff; border: 1px solid #1565c0; }
+        .btn-link { background: #fff; color: #1565c0; border: 1px solid #1565c0; margin-right: 6px; }
+        .btn-danger { background: #fff; color: #c62828; border: 1px solid #c62828; }
+        table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+        th, td { border: 1px solid #d0d7de; padding: 10px; text-align: left; vertical-align: middle; }
+        th { background: #f6f8fa; }
+        .inline-form { display: inline; }
+    </style>
+</head>
+<body>
+<h1>Chứng chỉ và file minh chứng</h1>
+
+<div th:if="${successMessage}" class="alert-success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="alert-error" th:text="${errorMessage}"></div>
+
+<form th:action="@{/student/my-certificates}" th:object="${certificateForm}" method="post" enctype="multipart/form-data">
+    <div class="field">
+        <label for="certificateName">Tên chứng chỉ *</label>
+        <input id="certificateName" type="text" th:field="*{certificateName}" placeholder="Ví dụ: JLPT N2 / AWS Certified Cloud Practitioner">
+        <div class="error" th:if="${#fields.hasErrors('certificateName')}" th:errors="*{certificateName}"></div>
+    </div>
+
+    <div class="field">
+        <label for="issuingOrganization">Đơn vị cấp *</label>
+        <input id="issuingOrganization" type="text" th:field="*{issuingOrganization}" placeholder="Ví dụ: JEES / Amazon Web Services">
+        <div class="error" th:if="${#fields.hasErrors('issuingOrganization')}" th:errors="*{issuingOrganization}"></div>
+    </div>
+
+    <div class="field">
+        <label for="issueDate">Ngày cấp *</label>
+        <input id="issueDate" type="date" th:field="*{issueDate}">
+        <div class="error" th:if="${#fields.hasErrors('issueDate')}" th:errors="*{issueDate}"></div>
+    </div>
+
+    <div class="field">
+        <label for="proofFile">File minh chứng (PDF, JPG, PNG — tối đa 5MB) *</label>
+        <input id="proofFile" type="file" th:field="*{proofFile}" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+        <div class="error" th:if="${#fields.hasErrors('proofFile')}" th:errors="*{proofFile}"></div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Thêm chứng chỉ</button>
+</form>
+
+<div th:if="${#lists.isEmpty(certificates)}" style="margin-top: 20px; color: #666;">
+    Chưa có chứng chỉ nào.
+</div>
+
+<table th:if="${!#lists.isEmpty(certificates)}">
+    <thead>
+    <tr>
+        <th>Tên chứng chỉ</th>
+        <th>Đơn vị cấp</th>
+        <th>Ngày cấp</th>
+        <th>File minh chứng</th>
+        <th>Thao tác</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="cert : ${certificates}">
+        <td th:text="${cert.certificateName}"></td>
+        <td th:text="${cert.issuingOrganization}"></td>
+        <td th:text="${#temporals.format(cert.issueDate, 'yyyy-MM-dd')}"></td>
+        <td>
+            <a th:href="@{/student/my-certificates/{id}/file(id=${cert.id})}" target="_blank" class="btn btn-link">Xem</a>
+            <a th:href="@{/student/my-certificates/{id}/file(id=${cert.id},download=true)}" class="btn btn-link">Tải về</a>
+            <span style="font-size: 0.85rem; color: #555;" th:text="${cert.originalFileName}"></span>
+        </td>
+        <td>
+            <form th:action="@{/student/my-certificates/{id}/delete(id=${cert.id})}"
+                  method="post"
+                  class="inline-form"
+                  onsubmit="return confirm('Xoá chứng chỉ và file minh chứng này?');">
+                <button type="submit" class="btn btn-danger">Xoá</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
